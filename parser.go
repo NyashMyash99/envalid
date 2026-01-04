@@ -11,6 +11,13 @@ var ErrEmpty = errors.New("empty value")
 // ErrInvalid indicates that a value is invalid for the target type.
 var ErrInvalid = errors.New("invalid value")
 
+// Parser defines a generic function that parses a string into a value of type T.
+//
+// Returns ErrEmpty if value is empty, ErrInvalid if string is invalid for the target type.
+type Parser[T any] func(string) (T, error)
+
+// ParseStr
+
 // ParseStr parses string s as a non-empty string.
 //
 // Returns ErrEmpty if string s is empty.
@@ -21,6 +28,10 @@ func ParseStr(s string) (string, error) {
 
 	return s, nil
 }
+
+var _ Parser[string] = ParseStr
+
+// ParsePort
 
 const (
 	minPort = 1
@@ -42,3 +53,5 @@ func ParsePort(s string) (int, error) {
 
 	return i, nil
 }
+
+var _ Parser[int] = ParsePort
