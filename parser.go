@@ -30,7 +30,7 @@ const (
 // ParsePort parses string s as a port (1–65535).
 //
 // Returns ErrEmpty if string s is empty, ErrInvalid if string s is not a number or out of range.
-func ParsePort(s string) (uint16, error) {
+func ParsePort(s string) (int, error) {
 	if s == "" {
 		return 0, ErrEmpty
 	}
@@ -40,5 +40,5 @@ func ParsePort(s string) (uint16, error) {
 		return 0, ErrInvalid
 	}
 
-	return uint16(i), nil
+	return i, nil
 }
