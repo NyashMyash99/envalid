@@ -1,5 +1,10 @@
 # envalid
 
+[![Release](https://img.shields.io/github/release/nyashmyash99/envalid.svg?style=flat-square)](https://github.com/nyashmyash99/envalid/releases)
+[![Build Status](https://github.com/nyashmyash99/envalid/actions/workflows/envalid.yml/badge.svg?branch=master)](https://github.com/nyashmyash99/envalid/actions/workflows/envalid.yml)
+[![Go Report Card](https://goreportcard.com/badge/github.com/nyashmyash99/envalid)](https://goreportcard.com/report/github.com/nyashmyash99/envalid)
+[![Go Reference](https://pkg.go.dev/badge/github.com/nyashmyash99/envalid)](https://pkg.go.dev/github.com/nyashmyash99/envalid)
+
 **envalid** is a library for validating and accessing environment variables in Go, inspired by a [similar library in TypeScript](https://github.com/af/envalid).
 
 
@@ -21,10 +26,10 @@ type Config struct {
 
 func Load() (*Config, error) {
   return env.Load[Config](env.Schema{
-    "Port": env.Supplier(env.Port, env.Variable[int]{
+    "Port": env.Supplier(env.ParsePort, env.Variable[uint16]{
       Key:         "PORT",
       Description: "HTTP server port",
-      Default:     ptr(8080),
+      Default:     ptr(uint16(8080)),
     }),
     "JwtSecret": env.Supplier(env.ParseStr, env.Variable[string]{
       Key: "JWT_SECRET",
