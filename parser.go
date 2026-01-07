@@ -46,6 +46,14 @@ func parseIntGeneric(s string, bitSize int) (int64, error) {
 	return v, nil
 }
 
+func parseFloatGeneric(s string, bitSize int) (float64, error) {
+	v, err := strconv.ParseFloat(trim(s), bitSize)
+	if err != nil {
+		return 0, mapStrconvErr(err, fmt.Sprintf("float%d", bitSize))
+	}
+	return v, nil
+}
+
 /// ParsePort
 
 const (
