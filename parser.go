@@ -54,6 +54,18 @@ func parseFloatGeneric(s string, bitSize int) (float64, error) {
 	return v, nil
 }
 
+/// ParseInt32
+
+// ParseInt32 parses string s as an integer number.
+//
+// It returns an error if string s is not a number or out of range.
+func ParseInt32(s string) (int32, error) {
+	v, err := parseIntGeneric(s, 32)
+	return int32(v), err
+}
+
+var _ Parser[int32] = ParseInt32
+
 /// ParsePort
 
 const (
