@@ -9,7 +9,7 @@ import (
 
 // Parser describes a generic function that parses a string into a value of type T.
 //
-// It returns an error if the value is invalid for the target type.
+// It returns an error if the input is invalid for the target type.
 type Parser[T any] func(string) (T, error)
 
 /// ParseStr
