@@ -102,6 +102,26 @@ func ParseFloat64(s string) (float64, error) {
 
 var _ Parser[float64] = ParseFloat64
 
+/// ParseBool
+
+// BoolMap maps bool-like strings to bool values.
+var BoolMap = map[string]bool{
+	"1": true, "true": true, "t": true, "yes": true, "y": true, "on": true,
+	"0": false, "false": false, "f": false, "no": false, "n": false, "off": false,
+}
+
+// ParseBool parses string s as a bool.
+//
+// It returns an error if string s is not a bool.
+func ParseBool(s string) (bool, error) {
+	s = strings.ToLower(trim(s))
+	if v, ok := BoolMap[s]; ok {
+		return v, nil
+	}
+	return false, errors.New("value must be a bool-like")
+}
+
+var _ Parser[bool] = ParseBool
 
 /// ParsePort
 
