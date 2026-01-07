@@ -66,6 +66,18 @@ func ParseInt32(s string) (int32, error) {
 
 var _ Parser[int32] = ParseInt32
 
+/// ParseInt64
+
+// ParseInt64 parses string s as an integer number.
+//
+// It returns an error if string s is not a number or out of range.
+func ParseInt64(s string) (int64, error) {
+	v, err := parseIntGeneric(s, 64)
+	return v, err
+}
+
+var _ Parser[int64] = ParseInt64
+
 /// ParsePort
 
 const (
