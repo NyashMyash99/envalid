@@ -2,7 +2,7 @@
 
 [![Release](https://img.shields.io/github/release/nyashmyash99/envalid.svg?style=flat-square)](https://github.com/nyashmyash99/envalid/releases)
 [![Tests status](https://github.com/nyashmyash99/envalid/actions/workflows/envalid.yml/badge.svg?branch=master)](https://github.com/nyashmyash99/envalid/actions/workflows/envalid.yml)
-[![Codecov](https://codecov.io/gh/nyashmyash99/envalid/branch/master/graph/badge.svg)](https://codecov.io/gh/nyashmyash99/envalid)
+[![codecov](https://codecov.io/github/NyashMyash99/envalid/graph/badge.svg?token=OMKEDW9BW2)](https://codecov.io/github/NyashMyash99/envalid)
 [![Go Report Card](https://goreportcard.com/badge/github.com/nyashmyash99/envalid)](https://goreportcard.com/report/github.com/nyashmyash99/envalid)
 [![Go Reference](https://pkg.go.dev/badge/github.com/nyashmyash99/envalid)](https://pkg.go.dev/github.com/nyashmyash99/envalid)
 
