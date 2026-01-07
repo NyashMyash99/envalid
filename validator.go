@@ -25,25 +25,25 @@ func WithDefault[T any](v T) *T {
 type Validator[T any] = Parser[T]
 
 // Str read ParseStr.
-var Str = ParseStr
+var Str = Validator[string](ParseStr)
 
 // Int32 read ParseInt32.
-var Int32 = ParseInt32
+var Int32 = Validator[int32](ParseInt32)
 
 // Int64 read ParseInt64.
-var Int64 = ParseInt64
+var Int64 = Validator[int64](ParseInt64)
 
 // Float32 read ParseFloat32.
-var Float32 = ParseFloat32
+var Float32 = Validator[float32](ParseFloat32)
 
 // Float64 read ParseFloat64.
-var Float64 = ParseFloat64
+var Float64 = Validator[float64](ParseFloat64)
 
 // Bool read ParseBool.
-var Bool = ParseBool
+var Bool = Validator[bool](ParseBool)
 
 // Port read ParsePort.
-var Port = ParsePort
+var Port = Validator[uint16](ParsePort)
 
 /// Error
 
