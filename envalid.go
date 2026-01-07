@@ -10,10 +10,10 @@ import (
 // ValidatorSupplier describes a function that provides a validator for the Schema.
 type ValidatorSupplier func() (any, error)
 
-// Supplier adapts a parser into a ValidatorSupplier.
-func Supplier[T any](p Parser[T], v Variable[T]) ValidatorSupplier {
+// Supplier adapts the validator in ValidatorSupplier.
+func Supplier[T any](validator Validator[T], variable Variable[T]) ValidatorSupplier {
 	return func() (any, error) {
-		return Validate(p, v)
+		return Validate(validator, variable)
 	}
 }
 
