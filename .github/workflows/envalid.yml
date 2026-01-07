@@ -47,7 +47,7 @@ jobs:
       - uses: actions/setup-go@v6
         with:
           go-version: ${{ matrix.go }}
-      - run: go test -coverprofile=coverage.out
+      - run: go test -coverprofile="coverage.out"
       - uses: codecov/codecov-action@v5
         with:
           fail_ci_if_error: true
