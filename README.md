@@ -38,15 +38,34 @@ import (
   env "github.com/nyashmyash99/envalid"
 )
 
+type Env string
+
+const (
+  EnvDevelopment Env = "development"
+  EnvTest        Env = "test"
+  EnvStaging     Env = "staging"
+  EnvProduction  Env = "production"
+)
+
 type Config struct {
-  Port        int
+  Env         Env
+  HttpPort    int
   DatabaseUrl string
 }
 
 func Load() (*Config, error) {
   return env.Load[Config](env.Schema{
-    "Port": env.Supplier(env.Port, env.Variable[uint16]{
-      Key:         "PORT",
+    "Env": env.Supplier(env.Str, env.Variable[string]{
+      Key: "GO_ENV",
+      Variants: []string{
+        string(EnvDevelopment),
+        string(EnvTest),
+        string(EnvStaging),
+        string(EnvProduction),
+      },
+    }),
+    "HttpPort": env.Supplier(env.Port, env.Variable[uint16]{
+      Key:         "HTTP_PORT",
       Description: "HTTP server port",
       Default:     env.WithDefault(uint16(8080)),
     }),
@@ -84,6 +103,17 @@ func Load() (*Config, error) {
 `Port` - ensures that env is a port (1-65535).
 
 Not what you need? I welcome [contribution](https://github.com/NyashMyash99/envalid?tab=readme-ov-file#contributing).
+
+
+### Validator options
+
+`Description` - a string describing an env.
+
+`Variants` - an array of available values for the env var.
+> Note that it case-sensitive.
+
+`Default` - a fallback value that is returned if the env var has not been specified. Specifying a default value effectively makes the env var optional.
+> Note that it takes precedence over validator and Variants, i.e. it may not match their conditions.
 
 
 ### Custom validators
@@ -134,7 +164,3 @@ Check out [contributing guidelines](https://github.com/nyashmyash99/envalid/blob
 - URL
 - DSN (URL)
 - Email
-
-### Options
-
-- Variants - an array of available values for env.
