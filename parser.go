@@ -9,7 +9,7 @@ import (
 
 // Parser describes a generic function that parses a string into a value of type T.
 //
-// It returns an error if the value is invalid for the target type.
+// It returns an error if the input is invalid for the target type.
 type Parser[T any] func(string) (T, error)
 
 /// ParseStr
@@ -23,7 +23,7 @@ func ParseStr(s string) (string, error) {
 	return trim(s), nil
 }
 
-// Ensures ParseStr implements Parser[string]
+// Ensures ParseStr implements Parser[string].
 var _ Parser[string] = ParseStr
 
 /// ParseNumber
@@ -56,9 +56,9 @@ func parseFloatGeneric(s string, bitSize int) (float64, error) {
 
 /// ParseInt32
 
-// ParseInt32 parses string s as an integer number.
+// ParseInt32 parses the string s as an integer.
 //
-// It returns an error if string s is not a number or out of range.
+// It returns an error if the string s is not a number or out of range.
 func ParseInt32(s string) (int32, error) {
 	v, err := parseIntGeneric(s, 32)
 	return int32(v), err
@@ -68,9 +68,9 @@ var _ Parser[int32] = ParseInt32
 
 /// ParseInt64
 
-// ParseInt64 parses string s as an integer number.
+// ParseInt64 parses the string s as an integer.
 //
-// It returns an error if string s is not a number or out of range.
+// It returns an error if the string s is not a number or out of range.
 func ParseInt64(s string) (int64, error) {
 	v, err := parseIntGeneric(s, 64)
 	return v, err
@@ -80,9 +80,9 @@ var _ Parser[int64] = ParseInt64
 
 /// ParseFloat32
 
-// ParseFloat32 parses string s as a float number.
+// ParseFloat32 parses the string s as a float.
 //
-// It returns an error if string s is not a number or out of range.
+// It returns an error if the string s is not a number or out of range.
 func ParseFloat32(s string) (float32, error) {
 	v, err := parseFloatGeneric(s, 32)
 	return float32(v), err
@@ -92,9 +92,9 @@ var _ Parser[float32] = ParseFloat32
 
 /// ParseFloat64
 
-// ParseFloat64 parses string s as a float number.
+// ParseFloat64 parses the string s as a float.
 //
-// It returns an error if string s is not a number or out of range.
+// It returns an error if the string s is not a number or out of range.
 func ParseFloat64(s string) (float64, error) {
 	v, err := parseFloatGeneric(s, 64)
 	return v, err
@@ -110,9 +110,9 @@ var BoolMap = map[string]bool{
 	"0": false, "false": false, "f": false, "no": false, "n": false, "off": false,
 }
 
-// ParseBool parses string s as a bool.
+// ParseBool parses the string s as a bool.
 //
-// It returns an error if string s is not a bool.
+// It returns an error if the string s is not a bool.
 func ParseBool(s string) (bool, error) {
 	s = strings.ToLower(trim(s))
 	if v, ok := BoolMap[s]; ok {
@@ -130,9 +130,9 @@ const (
 	maxPort = 65535
 )
 
-// ParsePort parses string s as a TCP/UDP port (1–65535).
+// ParsePort parses the string s as a TCP/UDP port (1–65535).
 //
-// It returns an error if string s is not a number or out of range.
+// It returns an error if the string s is not a number or out of range.
 func ParsePort(s string) (uint16, error) {
 	v, err := parseIntGeneric(s, 16)
 	if err != nil || v < minPort || v > maxPort {

@@ -10,10 +10,10 @@ import (
 // ValidatorSupplier describes a function that provides a validator for the Schema.
 type ValidatorSupplier func() (any, error)
 
-// Supplier adapts a parser into a ValidatorSupplier.
-func Supplier[T any](p Parser[T], v Variable[T]) ValidatorSupplier {
+// Supplier adapts the validator in ValidatorSupplier.
+func Supplier[T any](validator Validator[T], variable Variable[T]) ValidatorSupplier {
 	return func() (any, error) {
-		return Validate(p, v)
+		return Validate(validator, variable)
 	}
 }
 
@@ -27,7 +27,7 @@ func Load[T any](s Schema) (*T, error) {
 
 	k := rCfgType.Kind()
 	if k != reflect.Struct {
-		return nil, fmt.Errorf("Global errors:\n\t%s: got %s, want struct", rCfgType.Name(), k)
+		return nil, fmt.Errorf("%s: got %s, want struct", rCfgType.Name(), k)
 	}
 
 	rCfg := reflect.New(rCfgType).Elem()
@@ -52,7 +52,7 @@ func Load[T any](s Schema) (*T, error) {
 		rVal := reflect.ValueOf(val)
 		if !rVal.Type().AssignableTo(rField.Type) {
 			return nil, fmt.Errorf(
-				"Global errors:\n\t%s.%s: got %s, want %s",
+				"%s.%s: got %s, want %s",
 				rCfgType.Name(),
 				fieldName,
 				rVal.Type(),
