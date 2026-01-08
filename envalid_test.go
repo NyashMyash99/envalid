@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestParseStr(t *testing.T) {
+func TestStr(t *testing.T) {
 	tests := []struct {
 		name     string
 		input    string
@@ -24,10 +24,10 @@ func TestParseStr(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			res, err := ParseStr(tt.input)
+			vRes, vErr := Str(tt.input)
 
-			assert.Equal(t, tt.expected, res)
-			assert.NoError(t, err)
+			assert.Equal(t, tt.expected, vRes)
+			assert.NoError(t, vErr)
 		})
 	}
 }
