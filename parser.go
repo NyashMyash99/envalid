@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"net"
 	"strconv"
 	"strings"
 	"unsafe"
@@ -137,6 +138,19 @@ var ParsePort = TrimmedParser(func(s string) (uint16, error) {
 		return 0, fmt.Errorf("port must be a number between %d and %d", minPort, maxPort)
 	}
 	return uint16(v), nil
+})
+
+///
+
+// ParseIPv4 parses the string s as a IPv4 address.
+//
+// It returns an error if the string s is not a valid IPv4 address.
+var ParseIPv4 = TrimmedParser(func(s string) (net.IP, error) {
+	v := net.ParseIP(s)
+	if v == nil || v.To4() == nil {
+		return nil, errors.New("value must be a valid IPv4 address")
+	}
+	return v, nil
 })
 }
 
