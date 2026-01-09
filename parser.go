@@ -3,8 +3,10 @@ package envalid
 import (
 	"errors"
 	"fmt"
+	"math"
 	"strconv"
 	"strings"
+	"unsafe"
 )
 
 // Parser describes a generic function that parses a string into a value of type T.
@@ -43,51 +45,57 @@ func ternary[T any](cond bool, t T, f T) T {
 }
 
 // mapStrconvErr converts strconv errors into more detailed library errors.
-func mapStrconvErr(err error, typ string) error {
+func mapStrconvErr(err error, typ string, minVal, maxVal any) error {
 	if errors.Is(err, strconv.ErrSyntax) {
 		return fmt.Errorf("value must be a %s", typ)
 	}
 	if errors.Is(err, strconv.ErrRange) {
-		return fmt.Errorf("value must be in range of %s", typ)
+		return fmt.Errorf("value must be a number between %v and %v", minVal, maxVal)
 	}
 	return err
 }
 
-func parseIntGeneric(s string, bitSize int) (int64, error) {
-	v, err := strconv.ParseInt(trim(s), 10, bitSize)
+func parseIntGeneric[T ~int32 | ~int64](s string) (T, error) {
+	var zero T
+	bitSize := int(unsafe.Sizeof(zero) * 8)
+
+	v, err := strconv.ParseInt(s, 10, bitSize)
 	if err != nil {
-		return 0, mapStrconvErr(err, fmt.Sprintf("int%d", bitSize))
+		maxVal := ternary(bitSize == 32, math.MaxInt32, math.MaxInt64)
+		return 0, mapStrconvErr(err, fmt.Sprintf("int%d", bitSize), -maxVal-1, maxVal)
 	}
-	return v, nil
+	return T(v), nil
 }
 
-func parseFloatGeneric(s string, bitSize int) (float64, error) {
-	v, err := strconv.ParseFloat(trim(s), bitSize)
-	if err != nil {
-		return 0, mapStrconvErr(err, fmt.Sprintf("float%d", bitSize))
-	}
-	return v, nil
-}
+func parseFloatGeneric[T ~float32 | ~float64](s string) (T, error) {
+	var zero T
+	bitSize := int(unsafe.Sizeof(zero) * 8)
 
-/// ParseInt32
+	v, err := strconv.ParseFloat(s, bitSize)
+	if err != nil {
+		maxVal := ternary(bitSize == 32, math.MaxFloat32, math.MaxFloat64)
+		return 0, mapStrconvErr(err, fmt.Sprintf("float%d", bitSize), -maxVal, maxVal)
+	}
+	return T(v), nil
+}
 
 // ParseInt32 parses the string s as an integer.
 //
 // It returns an error if the string s is not a number or out of range.
 func ParseInt32(s string) (int32, error) {
-	v, err := parseIntGeneric(s, 32)
 	return int32(v), err
 }
 
 var _ Parser[int32] = ParseInt32
 
 /// ParseInt64
+	v, err := parseIntGeneric[int32](s)
 
 // ParseInt64 parses the string s as an integer.
 //
 // It returns an error if the string s is not a number or out of range.
 func ParseInt64(s string) (int64, error) {
-	v, err := parseIntGeneric(s, 64)
+	v, err := parseIntGeneric[int64](s)
 	return v, err
 }
 
@@ -99,19 +107,19 @@ var _ Parser[int64] = ParseInt64
 //
 // It returns an error if the string s is not a number or out of range.
 func ParseFloat32(s string) (float32, error) {
-	v, err := parseFloatGeneric(s, 32)
 	return float32(v), err
 }
 
 var _ Parser[float32] = ParseFloat32
 
 /// ParseFloat64
+	v, err := parseFloatGeneric[float32](s)
 
 // ParseFloat64 parses the string s as a float.
 //
 // It returns an error if the string s is not a number or out of range.
 func ParseFloat64(s string) (float64, error) {
-	v, err := parseFloatGeneric(s, 64)
+	v, err := parseFloatGeneric[float64](s)
 	return v, err
 }
 
@@ -149,7 +157,7 @@ const (
 //
 // It returns an error if the string s is not a number or out of range.
 func ParsePort(s string) (uint16, error) {
-	v, err := parseIntGeneric(s, 16)
+	v, err := parseIntGeneric[int32](s)
 	if err != nil || v < minPort || v > maxPort {
 		return 0, fmt.Errorf("port must be a number between %d and %d", minPort, maxPort)
 	}
