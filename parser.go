@@ -5,9 +5,14 @@ import (
 	"fmt"
 	"math"
 	"net"
+	"net/mail"
+	"net/url"
 	"strconv"
 	"strings"
 	"unsafe"
+
+	"golang.org/x/net/idna"
+	"golang.org/x/net/publicsuffix"
 )
 
 // Parser describes a generic function that parses a string into a value of type T.
@@ -163,6 +168,195 @@ var ParseIPv6 = TrimmedParser(func(s string) (net.IP, error) {
 	}
 	return v, nil
 })
+
+/// ParseDomain
+
+func ptr[T any](v T) *T { return &v }
+
+// PDomain describes a parsed domain.
+type PDomain struct {
+	String    string  // e.g. docs.nyashmyash99.dev
+	Subdomain *string // docs (see String)
+	Hostname  string  // nyashmyash99.dev (see String)
+	Zone      *string // dev (see String)
 }
 
-var _ Parser[uint16] = ParsePort
+// ParseDomain parses the string s as a domain (including IDN).
+//
+// It returns an error if the string s is not a valid domain.
+var ParseDomain = TrimmedParser(func(s string) (*PDomain, error) {
+	if strings.HasSuffix(s, ".") {
+		return nil, errors.New("value must not contain a trailing dot")
+	}
+
+	if strings.IndexByte(s, '.') == -1 {
+		return nil, errors.New("value must contain a zone")
+	}
+
+	v, err := idna.Registration.ToASCII(s)
+	if err != nil {
+		return nil, errors.New("value must be a valid domain")
+	}
+
+	lastDot := strings.LastIndexByte(v, '.')
+	nextDot := strings.LastIndexByte(v[:lastDot], '.')
+	var subdomainPtr *string
+
+	hostname := v
+	if nextDot != -1 {
+		hostname = v[nextDot+1:]
+		sub := v[:nextDot]
+		subdomainPtr = &sub
+	}
+
+	zone, _ := publicsuffix.PublicSuffix(s)
+
+	return &PDomain{
+		String:    v,
+		Subdomain: subdomainPtr,
+		Hostname:  hostname,
+		Zone:      ptr(zone),
+	}, nil
+})
+
+/// ParseHost
+
+// PHost describes a parsed host.
+type PHost struct {
+	String string   // e.g. docs.nyashmyash99.dev, 127.0.0.1 or ::1
+	Domain *PDomain // Optional domain, depending on the host type
+	IP     net.IP   // Optional ip, depending on the host type
+}
+
+// ParseHost parses a string as a host, which can be:
+// - an IPv4 address;
+// - an IPv6 address;
+// - a domain (including localhost).
+//
+// It returns an error if the string s is not a host.
+var ParseHost = TrimmedParser(func(s string) (*PHost, error) {
+	if strings.EqualFold(s, "localhost") {
+		d := &PDomain{String: "localhost", Hostname: "localhost"}
+		return &PHost{String: "localhost", Domain: d}, nil
+	}
+
+	if v, err := ParseIPv4(s); err == nil {
+		return &PHost{String: v.String(), IP: v}, nil
+	}
+	if v, err := ParseIPv6(s); err == nil {
+		return &PHost{String: v.String(), IP: v}, nil
+	}
+	if v, err := ParseDomain(s); err == nil {
+		return &PHost{String: v.String, Domain: v}, nil
+	}
+	return nil, errors.New("value must be a host (IPv4, IPv6, or domain, including localhost)")
+})
+
+/// ParseURL
+
+// PURL describes a parsed url.
+type PURL struct {
+	String   string     // e.g. http://user:pass@docs.nyashmyash99.dev:443/envalid?tab=documentation#quick-start
+	Protocol string     // http (see String)
+	Username *string    // user (see String)
+	Password *string    // pass (see String)
+	Host     PHost      // docs.nyashmyash99.dev (see String)
+	Port     *uint16    // 443 (see String)
+	Path     *string    // envalid (see String)
+	Params   url.Values // tab="documentation" (see String)
+	Anchor   *string    // quick-start
+}
+
+// ParseURL parses the string s as a url in the maximum format "protocol://username:password@host:port/path?params#anchor".
+//
+// It returns an error if the string s is not a valid url.
+var ParseURL = TrimmedParser(func(s string) (*PURL, error) {
+	uri, err := url.Parse(s)
+	if err != nil {
+		return nil, errors.New("value must be a URL")
+	}
+
+	if uri.Scheme == "" {
+		return nil, errors.New("value must be in absolute format (protocol://...)")
+	}
+
+	if uri.Opaque != "" {
+		return nil, errors.New("value must be in default url format")
+	}
+
+	if h := uri.Hostname(); h == "" {
+		return nil, errors.New("value must contain a host")
+	}
+
+	var portPtr *uint16
+	if p := uri.Port(); p != "" {
+		pp, err := ParsePort(p)
+		if err != nil {
+			return nil, err
+		}
+		portPtr = &pp
+	}
+
+	host, err := ParseHost(uri.Hostname())
+	if err != nil {
+		return nil, errors.New("hostname must be a valid host (IPv4, IPv6, or domain, including localhost)")
+	}
+
+	var usernamePtr, passwordPtr *string
+	if uri.User != nil {
+		usernamePtr = ptr(uri.User.Username())
+		p, _ := uri.User.Password()
+		passwordPtr = &p
+	}
+
+	var pathPtr *string
+	if p := uri.Path; p != "" && p != "/" {
+		pathPtr = ptr(strings.TrimPrefix(p, "/"))
+	}
+
+	var fragmentPtr *string
+	if uri.Fragment != "" {
+		fragmentPtr = ptr(uri.Fragment)
+	}
+
+	return &PURL{
+		String:   s,
+		Protocol: strings.ToLower(uri.Scheme),
+		Username: usernamePtr,
+		Password: passwordPtr,
+		Host:     *host,
+		Port:     portPtr,
+		Path:     pathPtr,
+		Params:   uri.Query(),
+		Anchor:   fragmentPtr,
+	}, nil
+})
+
+///
+
+// ParseEmail parses the string s as an email address in the format "user@domain".
+//
+// It returns an error if the string s is not a valid email address.
+var ParseEmail = TrimmedParser(func(s string) (string, error) {
+	address, err := mail.ParseAddress(s)
+	if err != nil {
+		return "", errors.New("value must be an email")
+	}
+
+	// Cuts off:
+	// - Daniil <contact@nyashmyash99.dev>
+	// - "Daniil Koshkin"@nyashmyash99.dev
+	hasDiff := address.Address != s
+	// Cuts off "user@[127.0.0.1]".
+	hasBracket := strings.IndexByte(address.Address, '[') != -1
+	if hasDiff || hasBracket {
+		return "", errors.New("value must be in format \"user@domain\"")
+	}
+
+	_, domain, _ := strings.Cut(address.Address, "@")
+	if _, err := ParseDomain(domain); err != nil {
+		return "", errors.New("email must contain a valid domain")
+	}
+
+	return s, nil
+})
