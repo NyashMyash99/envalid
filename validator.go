@@ -24,29 +24,47 @@ func WithDefault[T any](v T) *T {
 
 /// Validator
 
-// Validator read Parser.
+// Validator see Parser.
 type Validator[T any] = Parser[T]
 
-// Str read ParseStr.
-var Str = Validator[string](ParseStr)
+// Str see ParseStr.
+var Str = ParseStr
 
-// Int32 read ParseInt32.
-var Int32 = Validator[int32](ParseInt32)
+// Int32 see ParseInt32.
+var Int32 = ParseInt32
 
-// Int64 read ParseInt64.
-var Int64 = Validator[int64](ParseInt64)
+// Int64 see ParseInt64.
+var Int64 = ParseInt64
 
-// Float32 read ParseFloat32.
-var Float32 = Validator[float32](ParseFloat32)
+// Float32 see ParseFloat32.
+var Float32 = ParseFloat32
 
-// Float64 read ParseFloat64.
-var Float64 = Validator[float64](ParseFloat64)
+// Float64 see ParseFloat64.
+var Float64 = ParseFloat64
 
-// Bool read ParseBool.
-var Bool = Validator[bool](ParseBool)
+// Bool see ParseBool.
+var Bool = ParseBool
 
-// Port read ParsePort.
-var Port = Validator[uint16](ParsePort)
+// Port see ParsePort.
+var Port = ParsePort
+
+// IPv4 see ParseIPv4.
+var IPv4 = ParseIPv4
+
+// IPv6 see ParseIPv6.
+var IPv6 = ParseIPv6
+
+// Domain see ParseDomain.
+var Domain = ParseDomain
+
+// Host see ParseHost.
+var Host = ParseHost
+
+// URL see ParseURL.
+var URL = ParseURL
+
+// Email see ParseEmail.
+var Email = ParseEmail
 
 /// Error
 
@@ -73,7 +91,6 @@ func (e *ValidationError) Error() string {
 	if e.err != nil {
 		return fmt.Sprintf("%s: %v", e.msg, e.err)
 	}
-
 	return e.msg
 }
 
@@ -86,7 +103,6 @@ func newValidationError[T any](c ErrorCode, v Variable[T], err error) *Validatio
 	if v.Description != "" {
 		msg += " (" + v.Description + ")"
 	}
-
 	return &ValidationError{
 		Code: c,
 		msg:  msg,
@@ -107,7 +123,6 @@ func Validate[T any](validator Validator[T], variable Variable[T]) (T, error) {
 		if variable.Default != nil {
 			return *variable.Default, nil
 		}
-
 		return zero, newValidationError(ErrNoValue, variable, nil)
 	}
 
@@ -119,6 +134,5 @@ func Validate[T any](validator Validator[T], variable Variable[T]) (T, error) {
 	if err != nil {
 		return zero, newValidationError(ErrInvalidValue, variable, err)
 	}
-
 	return val, nil
 }
