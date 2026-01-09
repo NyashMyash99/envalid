@@ -35,6 +35,14 @@ var _ Parser[string] = ParseStr
 
 /// ParseNumber
 
+func ternary[T any](cond bool, t T, f T) T {
+	if cond {
+		return t
+	}
+	return f
+}
+
+// mapStrconvErr converts strconv errors into more detailed library errors.
 func mapStrconvErr(err error, typ string) error {
 	if errors.Is(err, strconv.ErrSyntax) {
 		return fmt.Errorf("value must be a %s", typ)
