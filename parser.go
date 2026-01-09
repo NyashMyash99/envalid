@@ -18,6 +18,13 @@ func trim(s string) string {
 	return strings.TrimSpace(s)
 }
 
+// TrimmedParser wraps the Parser, preprocessing the input with the strings.TrimSpace function.
+func TrimmedParser[T any](p Parser[T]) Parser[T] {
+	return func(s string) (T, error) {
+		return p(strings.TrimSpace(s))
+	}
+}
+
 // ParseStr parses string s as a string.
 func ParseStr(s string) (string, error) {
 	return trim(s), nil
