@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"slices"
+	"strings"
 )
 
 /// Variable
@@ -110,7 +111,7 @@ func Validate[T any](validator Validator[T], variable Variable[T]) (T, error) {
 		return zero, newValidationError(ErrNoValue, variable, nil)
 	}
 
-	if len(variable.Variants) > 0 && !slices.Contains(variable.Variants, trim(env)) {
+	if len(variable.Variants) > 0 && !slices.Contains(variable.Variants, strings.TrimSpace(env)) {
 		return zero, newValidationError(ErrInvalidValue, variable, nil)
 	}
 

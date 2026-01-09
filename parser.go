@@ -14,12 +14,6 @@ import (
 // It returns an error if the input is invalid for the target type.
 type Parser[T any] func(string) (T, error)
 
-/// ParseStr
-
-func trim(s string) string {
-	return strings.TrimSpace(s)
-}
-
 // TrimmedParser wraps the Parser, preprocessing the input with the strings.TrimSpace function.
 func TrimmedParser[T any](p Parser[T]) Parser[T] {
 	return func(s string) (T, error) {
@@ -27,13 +21,10 @@ func TrimmedParser[T any](p Parser[T]) Parser[T] {
 	}
 }
 
-// ParseStr parses string s as a string.
-func ParseStr(s string) (string, error) {
-	return trim(s), nil
-}
-
-// Ensures ParseStr implements Parser[string].
-var _ Parser[string] = ParseStr
+// ParseStr parses string s as a trimmed string.
+var ParseStr = TrimmedParser(func(s string) (string, error) {
+	return s, nil
+})
 
 /// ParseNumber
 
@@ -82,48 +73,34 @@ func parseFloatGeneric[T ~float32 | ~float64](s string) (T, error) {
 // ParseInt32 parses the string s as an integer.
 //
 // It returns an error if the string s is not a number or out of range.
-func ParseInt32(s string) (int32, error) {
-	return int32(v), err
-}
-
-var _ Parser[int32] = ParseInt32
-
-/// ParseInt64
+var ParseInt32 = TrimmedParser(func(s string) (int32, error) {
 	v, err := parseIntGeneric[int32](s)
+	return v, err
+})
 
 // ParseInt64 parses the string s as an integer.
 //
 // It returns an error if the string s is not a number or out of range.
-func ParseInt64(s string) (int64, error) {
+var ParseInt64 = TrimmedParser(func(s string) (int64, error) {
 	v, err := parseIntGeneric[int64](s)
 	return v, err
-}
-
-var _ Parser[int64] = ParseInt64
-
-/// ParseFloat32
+})
 
 // ParseFloat32 parses the string s as a float.
 //
 // It returns an error if the string s is not a number or out of range.
-func ParseFloat32(s string) (float32, error) {
-	return float32(v), err
-}
-
-var _ Parser[float32] = ParseFloat32
-
-/// ParseFloat64
+var ParseFloat32 = TrimmedParser(func(s string) (float32, error) {
 	v, err := parseFloatGeneric[float32](s)
+	return v, err
+})
 
 // ParseFloat64 parses the string s as a float.
 //
 // It returns an error if the string s is not a number or out of range.
-func ParseFloat64(s string) (float64, error) {
+var ParseFloat64 = TrimmedParser(func(s string) (float64, error) {
 	v, err := parseFloatGeneric[float64](s)
 	return v, err
-}
-
-var _ Parser[float64] = ParseFloat64
+})
 
 /// ParseBool
 
@@ -136,15 +113,13 @@ var BoolMap = map[string]bool{
 // ParseBool parses the string s as a bool.
 //
 // It returns an error if the string s is not a bool.
-func ParseBool(s string) (bool, error) {
-	s = strings.ToLower(trim(s))
+var ParseBool = TrimmedParser(func(s string) (bool, error) {
+	s = strings.ToLower(s)
 	if v, ok := BoolMap[s]; ok {
 		return v, nil
 	}
 	return false, errors.New("value must be a bool-like")
-}
-
-var _ Parser[bool] = ParseBool
+})
 
 /// ParsePort
 
@@ -156,12 +131,13 @@ const (
 // ParsePort parses the string s as a TCP/UDP port (1–65535).
 //
 // It returns an error if the string s is not a number or out of range.
-func ParsePort(s string) (uint16, error) {
+var ParsePort = TrimmedParser(func(s string) (uint16, error) {
 	v, err := parseIntGeneric[int32](s)
 	if err != nil || v < minPort || v > maxPort {
 		return 0, fmt.Errorf("port must be a number between %d and %d", minPort, maxPort)
 	}
 	return uint16(v), nil
+})
 }
 
 var _ Parser[uint16] = ParsePort
