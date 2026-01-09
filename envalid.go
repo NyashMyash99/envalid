@@ -31,19 +31,18 @@ func Load[T any](s Schema) (*T, error) {
 	}
 
 	rCfg := reflect.New(rCfgType).Elem()
-
 	var errs []error
 
 	for i := 0; i < rCfgType.NumField(); i++ {
 		rField := rCfgType.Field(i)
 		fieldName := rField.Name
 
-		v := s[fieldName]
-		if v == nil {
+		validate := s[fieldName]
+		if validate == nil {
 			continue
 		}
 
-		val, err := v()
+		val, err := validate()
 		if err != nil {
 			errs = append(errs, err)
 			continue
