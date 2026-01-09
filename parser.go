@@ -152,6 +152,17 @@ var ParseIPv4 = TrimmedParser(func(s string) (net.IP, error) {
 	}
 	return v, nil
 })
+
+// ParseIPv6 parses the string s as a IPv6 address.
+//
+// It returns an error if the string s is not a valid IPv6 address.
+var ParseIPv6 = TrimmedParser(func(s string) (net.IP, error) {
+	v := net.ParseIP(s)
+	if v == nil || v.To16() == nil || v.To4() != nil {
+		return nil, errors.New("value must be a valid IPv6 address")
+	}
+	return v, nil
+})
 }
 
 var _ Parser[uint16] = ParsePort
