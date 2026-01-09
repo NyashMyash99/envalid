@@ -50,7 +50,7 @@ const (
 type Config struct {
   Env         Env
   HttpPort    int
-  DatabaseUrl string
+  DatabaseUrl *env.PURL
 }
 
 func Load() (*Config, error) {
@@ -70,7 +70,7 @@ func Load() (*Config, error) {
       Default:     env.WithDefault(uint16(8080)),
     }),
     // postgres://user:password@localhost:5432/database
-    "DatabaseUrl": env.Supplier(env.Str, env.Variable[string]{
+    "DatabaseUrl": env.Supplier(env.URL, env.Variable[*env.PURL]{
       Key: "DATABASE_URL",
     }),
   })
@@ -82,32 +82,50 @@ func Load() (*Config, error) {
 
 ### Validator types
 
-`Str` - ensures that env exists.
+`Str` - ensures that the env var exists.
 > Note that an empty string is considered a valid value.
 
-`Int32` - ensures that env is an int32.
+`Int32` - ensures that the env var is an int32.
 
-`Int64` - ensures that env is an int64.
+`Int64` - ensures that the env var is an int64.
 
-`Float32` - ensures that env is a float32.
+`Float32` - ensures that the env var is a float32.
 
-`Float64` - ensures that env is a float64.
+`Float64` - ensures that the env var is a float64.
 
-`Bool` - ensures that env is a bool-like.
+`Bool` - ensures that the env var is a bool-like.
 > true: 1, true, t, yes, y, on
 
 > false: 0, false, f, no, n, off
 
-\* List is expanded by changing `BoolMap`.
+\* List can be expanded by modifying `BoolMap`.
 
-`Port` - ensures that env is a port (1-65535).
+`Port` - ensures that the env var is a TCP/UDP port (1-65535).
+
+`IPv4` - ensures that the env var is a IPv4 address.
+
+`IPv6` - ensures that the env var is a IPv6 address.
+
+`Domain` - ensures that the env var is a domain (including IDN).
+> Minimal format: name.zone
+ 
+> Maximal format: subdomain.name.zone
+
+`Host` - ensures that the env var is a host (IPv4, IPv6, domain, including localhost).
+
+`URL` - ensures that the env var is a url.
+> Minimal format: protocol://host
+
+> Maximal format: protocol://username:password@host:port/path?params#anchor
+
+`Email` - ensures that the env var is an email address in the format `user@domain`.
 
 Not what you need? I welcome [contribution](https://github.com/NyashMyash99/envalid?tab=readme-ov-file#contributing).
 
 
 ### Validator options
 
-`Description` - a string describing an env.
+`Description` - a string describing the env var.
 
 `Variants` - an array of available values for the env var.
 > Note that it case-sensitive.
@@ -119,17 +137,16 @@ Not what you need? I welcome [contribution](https://github.com/NyashMyash99/enva
 ### Custom validators
 
 ```go
-// Create a parser.
-func ParseAdmin(s string) (bool, error) {
+package config
+
+import (
+	env "github.com/nyashmyash99/envalid"
+)
+
+// Create a validator.
+var Admin = env.TrimmedParser(func(s string) (bool, error) {
   return s == "NyashMyash99", nil
-}
-
-// Ensure that the parser implements Parser.
-var _ Parser[bool] = ParseAdmin
-
-// Shorten the function name by converting it to a validator, 
-// or simply continue using the parser.
-var Admin = Validator[bool](ParseAdmin)
+})
 
 type Config struct {
   Admin bool
@@ -151,16 +168,3 @@ func Load() (*Config, error) {
 I appreciate contributions!
 
 Check out [contributing guidelines](https://github.com/nyashmyash99/envalid/blob/master/CONTRIBUTING.md) to learn more.
-
-
-## 🔧 TODO
-
-### Validators
-
-- Domain
-- IPv4
-- IPv6
-- Host (domain + ipv4 + ipv6)
-- URL
-- DSN (URL)
-- Email
