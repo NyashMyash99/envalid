@@ -3,15 +3,18 @@ package envalid
 import (
 	"fmt"
 	"os"
+	"slices"
+	"strings"
 )
 
 /// Variable
 
 // Variable describes the environment variable for validation.
 type Variable[T any] struct {
-	Key         string // Env key (e.g. TOKEN)
-	Description string // Optional description used in errors
-	Default     *T     // Optional default value returned if env is not set
+	Key         string   // Required env var key (e.g. GO_ENV)
+	Description string   // Optional description used in errors
+	Variants    []string // Optional array of available values for the env var. It is case-sensitive.
+	Default     *T       // Optional default value returned if the env var is not set. It takes precedence over Validator and Variants, i.e. it may not match their conditions.
 }
 
 // WithDefault provides a default value for a Variable.
@@ -21,29 +24,47 @@ func WithDefault[T any](v T) *T {
 
 /// Validator
 
-// Validator read Parser.
+// Validator see Parser.
 type Validator[T any] = Parser[T]
 
-// Str read ParseStr.
-var Str = Validator[string](ParseStr)
+// Str see ParseStr.
+var Str = ParseStr
 
-// Int32 read ParseInt32.
-var Int32 = Validator[int32](ParseInt32)
+// Int32 see ParseInt32.
+var Int32 = ParseInt32
 
-// Int64 read ParseInt64.
-var Int64 = Validator[int64](ParseInt64)
+// Int64 see ParseInt64.
+var Int64 = ParseInt64
 
-// Float32 read ParseFloat32.
-var Float32 = Validator[float32](ParseFloat32)
+// Float32 see ParseFloat32.
+var Float32 = ParseFloat32
 
-// Float64 read ParseFloat64.
-var Float64 = Validator[float64](ParseFloat64)
+// Float64 see ParseFloat64.
+var Float64 = ParseFloat64
 
-// Bool read ParseBool.
-var Bool = Validator[bool](ParseBool)
+// Bool see ParseBool.
+var Bool = ParseBool
 
-// Port read ParsePort.
-var Port = Validator[uint16](ParsePort)
+// Port see ParsePort.
+var Port = ParsePort
+
+// IPv4 see ParseIPv4.
+var IPv4 = ParseIPv4
+
+// IPv6 see ParseIPv6.
+var IPv6 = ParseIPv6
+
+// Domain see ParseDomain.
+var Domain = ParseDomain
+
+// Host see ParseHost.
+var Host = ParseHost
+
+// URL see ParseURL.
+var URL = ParseURL
+
+// Email see ParseEmail.
+var Email = ParseEmail
 
 /// Error
 
@@ -51,9 +72,9 @@ type ErrorCode int
 
 const (
 	_ ErrorCode = iota
-	// ErrNoValue occurs when env is not set and no default value is specified.
+	// ErrNoValue occurs when an env var is not set and no default value is specified.
 	ErrNoValue
-	// ErrInvalidValue occurs when env is invalid for the target type.
+	// ErrInvalidValue occurs when an env var is invalid for the target type.
 	ErrInvalidValue
 )
 
@@ -70,7 +91,6 @@ func (e *ValidationError) Error() string {
 	if e.err != nil {
 		return fmt.Sprintf("%s: %v", e.msg, e.err)
 	}
-
 	return e.msg
 }
 
@@ -83,7 +103,6 @@ func newValidationError[T any](c ErrorCode, v Variable[T], err error) *Validatio
 	if v.Description != "" {
 		msg += " (" + v.Description + ")"
 	}
-
 	return &ValidationError{
 		Code: c,
 		msg:  msg,
@@ -93,9 +112,9 @@ func newValidationError[T any](c ErrorCode, v Variable[T], err error) *Validatio
 
 // Validate loads and validates an environment variable using the provided Validator.
 //
-// It returns the default value if env is not set and a default value is specified;
-// a ValidationError with ErrNoValue if env is not set and no default value is specified;
-// a ValidationError with ErrInvalidValue if env is invalid for the target type.
+// It returns the default value if the env var is not set and a default value is specified;
+// a ValidationError with ErrNoValue if the env var is not set and no default value is specified;
+// a ValidationError with ErrInvalidValue if the env var is not found in the available variants or is invalid for the target type.
 func Validate[T any](validator Validator[T], variable Variable[T]) (T, error) {
 	var zero T
 
@@ -104,14 +123,16 @@ func Validate[T any](validator Validator[T], variable Variable[T]) (T, error) {
 		if variable.Default != nil {
 			return *variable.Default, nil
 		}
-
 		return zero, newValidationError(ErrNoValue, variable, nil)
+	}
+
+	if len(variable.Variants) > 0 && !slices.Contains(variable.Variants, strings.TrimSpace(env)) {
+		return zero, newValidationError(ErrInvalidValue, variable, nil)
 	}
 
 	val, err := validator(env)
 	if err != nil {
 		return zero, newValidationError(ErrInvalidValue, variable, err)
 	}
-
 	return val, nil
 }
