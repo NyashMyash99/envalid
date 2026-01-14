@@ -27,7 +27,7 @@ func Load[T any](s Schema) (*T, error) {
 
 	k := rCfgType.Kind()
 	if k != reflect.Struct {
-		return nil, fmt.Errorf("%s: got %s, want struct", rCfgType.Name(), k)
+		return nil, fmt.Errorf("%s: got %s, want struct", rCfgType.String(), k)
 	}
 
 	rCfg := reflect.New(rCfgType).Elem()
@@ -52,7 +52,7 @@ func Load[T any](s Schema) (*T, error) {
 		if !rVal.Type().AssignableTo(rField.Type) {
 			return nil, fmt.Errorf(
 				"%s.%s: got %s, want %s",
-				rCfgType.Name(),
+				rCfgType.String(),
 				fieldName,
 				rVal.Type(),
 				rField.Type,
@@ -93,6 +93,7 @@ func Load[T any](s Schema) (*T, error) {
 	}
 
 	if len(errMsg) > 0 {
+		errMsg = append([]string{rCfgType.String()}, errMsg...)
 		return nil, errors.New(strings.Join(errMsg, "\n"))
 	}
 
