@@ -38,40 +38,43 @@ import (
   env "github.com/nyashmyash99/envalid"
 )
 
-type Env string
-
-const (
-  EnvDevelopment Env = "development"
-  EnvTest        Env = "test"
-  EnvStaging     Env = "staging"
-  EnvProduction  Env = "production"
-)
+type Author struct {
+  Name  string
+  Email string
+}
 
 type Config struct {
-  Env         Env
-  HttpPort    int
+  Env         string
+  HttpPort    uint16
   DatabaseUrl *env.PURL
+  Authors     []Author
 }
 
 func Load() (*Config, error) {
+  devDefDatabaseUrl, _ := env.ParseURL("postgres://local:password@localhost:5432/postgres?sslmode=disable")
+
   return env.Load[Config](env.Schema{
     "Env": env.Supplier(env.Str, env.Variable[string]{
       Key: "GO_ENV",
       Variants: []string{
-        string(EnvDevelopment),
-        string(EnvTest),
-        string(EnvStaging),
-        string(EnvProduction),
+        "development",
+        "test",
+        "staging",
+        "production",
       },
+      // Default: env.WithDefault("development"),
     }),
     "HttpPort": env.Supplier(env.Port, env.Variable[uint16]{
       Key:         "HTTP_PORT",
       Description: "HTTP server port",
       Default:     env.WithDefault(uint16(8080)),
     }),
-    // postgres://user:password@localhost:5432/database
     "DatabaseUrl": env.Supplier(env.URL, env.Variable[*env.PURL]{
-      Key: "DATABASE_URL",
+      Key:        "DATABASE_URL",
+      DevDefault: &devDefDatabaseUrl,
+    }),
+    "Authors": env.Supplier(env.JSON, env.Variable[[]Author]{
+      Key: "AUTHORS",
     }),
   })
 }
@@ -85,13 +88,7 @@ func Load() (*Config, error) {
 `Str` - ensures that the env var exists.
 > Note that an empty string is considered a valid value.
 
-`Int32` - ensures that the env var is an int32.
-
-`Int64` - ensures that the env var is an int64.
-
-`Float32` - ensures that the env var is a float32.
-
-`Float64` - ensures that the env var is a float64.
+`Int32`/`Int64`/`Float32`/`Float64` - ensures that the env var is a number.
 
 `Bool` - ensures that the env var is a bool-like.
 > true: 1, true, t, yes, y, on
@@ -102,9 +99,7 @@ func Load() (*Config, error) {
 
 `Port` - ensures that the env var is a TCP/UDP port (1-65535).
 
-`IPv4` - ensures that the env var is a IPv4 address.
-
-`IPv6` - ensures that the env var is a IPv6 address.
+`IPv4`/`IPv6` - ensures that the env var is a IP address.
 
 `Domain` - ensures that the env var is a domain (including IDN).
 > Minimal format: name.zone
@@ -117,6 +112,8 @@ func Load() (*Config, error) {
 > Minimal format: protocol://host
 
 > Maximal format: protocol://username:password@host:port/path?params#anchor
+
+`JSON` - ensures that the env var is a JSON in the specified format.
 
 `Email` - ensures that the env var is an email address in the format `user@domain`.
 
@@ -131,7 +128,9 @@ Not what you need? I welcome [contribution](https://github.com/NyashMyash99/enva
 > Note that it case-sensitive.
 
 `Default` - a fallback value that is returned if the env var has not been specified. Specifying a default value effectively makes the env var optional.
-> Note that it takes precedence over validator and Variants, i.e. it may not match their conditions.
+> Note that Default values takes precedence over validator and Variants, i.e. it may not match their conditions.
+
+`DevDefault` - a fallback value that is returned if the env var has not been specified, GO_ENV var is specified and is not `production`.
 
 
 ### Custom validators

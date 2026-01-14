@@ -1,12 +1,15 @@
 package envalid
 
 import (
+	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"math"
 	"net"
 	"net/mail"
 	"net/url"
+	"reflect"
 	"strconv"
 	"strings"
 	"unsafe"
@@ -331,6 +334,30 @@ var ParseURL = TrimmedParser(func(s string) (*PURL, error) {
 		Anchor:   fragmentPtr,
 	}, nil
 })
+
+/// ParseJSON
+
+// ParseJSON parses the string s as an JSON with schema T.
+//
+// It returns an error if the string s is not a valid JSON.
+func ParseJSON[T any](s string) (T, error) {
+	s = strings.TrimSpace(s)
+
+	dec := json.NewDecoder(bytes.NewBufferString(s))
+	dec.DisallowUnknownFields()
+
+	var schema T
+	if err := dec.Decode(&schema); err != nil {
+		return schema, fmt.Errorf(
+			"value must be an JSON with schema %q",
+			reflect.TypeOf(schema).String(),
+		)
+	}
+
+	return schema, nil
+}
+
+var _ Parser[any] = ParseJSON[any]
 
 ///
 
